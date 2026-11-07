@@ -1,0 +1,87 @@
+services:
+  # Laravel PHP-FPM Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: office-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - FILESYSTEM_DISK=rustfs
+      - AWS_ACCESS_KEY_ID=rustfs_admin
+      - AWS_SECRET_ACCESS_KEY=rustfs_secret_key
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_BUCKET=office-documents
+      - AWS_ENDPOINT=http://rustfs:9000
+      - AWS_USE_PATH_STYLE_ENDPOINT=true
+    networks:
+      - office-network
+    depends_on:
+      - rustfs
+
+  # Nginx Web Server for Laravel
+  web:
+    image: nginx:alpine
+    container_name: office-web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - office-network
+    depends_on:
+      - app
+
+  # RustFS Object Storage Service (S3-Compatible)
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: rustfs-storage
+    restart: unless-stopped
+    ports:
+      - "9000:9000"   # S3 API Endpoint
+      - "9001:9001"   # Web Management Console
+    environment:
+      - RUSTFS_ACCESS_KEY=rustfs_admin
+      - RUSTFS_SECRET_KEY=rustfs_secret_key
+      - RUSTFS_ADDRESS=:9000
+      - RUSTFS_CONSOLE_ADDRESS=:9001
+      - RUSTFS_CONSOLE_ENABLE=true
+    volumes:
+      - rustfs_data:/data
+    networks:
+      - office-network
+
+  # Init container to automatically create default bucket 'office-documents'
+  rustfs-init:
+    image: amazon/aws-cli:latest
+    container_name: rustfs-init-bucket
+    depends_on:
+      - rustfs
+    environment:
+      - AWS_ACCESS_KEY_ID=rustfs_admin
+      - AWS_SECRET_ACCESS_KEY=rustfs_secret_key
+      - AWS_DEFAULT_REGION=us-east-1
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Menunggu RustFS aktif...';
+      sleep 3;
+      aws --endpoint-url http://rustfs:9000 s3 mb s3://office-documents || echo 'Bucket office-documents sudah ada.';
+      echo 'Inisialisasi bucket RustFS selesai!';
+      "
+    networks:
+      - office-network
+
+networks:
+  office-network:
+    driver: bridge
+
+volumes:
+  rustfs_data:
+    driver: local

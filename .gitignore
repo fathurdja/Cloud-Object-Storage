@@ -1,0 +1,59 @@
+# Environment & Secrets
+.env
+.env.backup
+.env.production
+.env.testing
+/auth.json
+
+# Composer & Dependencies
+/vendor/
+
+# Storage & Cache
+/storage/app/uploads/*
+!/storage/app/uploads/.gitkeep
+/storage/framework/cache/*
+!/storage/framework/cache/.gitkeep
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
+/storage/framework/views/*
+!/storage/framework/views/.gitkeep
+/storage/logs/*.log
+/storage/*.key
+/storage/pail
+
+# SQLite Local Database
+database/*.sqlite
+database/*.sqlite-journal
+
+# Logs & Debugging
+*.log
+.phpunit.result.cache
+/.phpunit.cache
+
+# IDE & Editor Configs
+.DS_Store
+Thumbs.db
+/.idea/
+/.vscode/
+/.zed/
+/.cursor/
+/.nova/
+/.codex/
+.phpactor.json
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+
+# Antigravity & Agent Tooling Cache
+.mcp.json
+boost.json
+.claude/
+
+# Node & Build (Not used in this project, but ignored for safety)
+/node_modules/
+/public/build/
+/public/hot
+/public/storage
+/public/fonts-manifest.dev.json
+
+# Note: CLAUDE.md and PRD documents are intentionally TRACKED (NOT ignored)
